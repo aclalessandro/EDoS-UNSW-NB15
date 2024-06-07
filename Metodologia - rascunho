@@ -1,0 +1,93 @@
+Metodologia (passo a passo)
+
+1) Download do dataset UNSW-NB15 - 49 colunas e 257673 linhas
+
+2) No dataset, foi criada mais uma label chamada EDoS dentro do conjunto de dados de ataques de DoS. Essa label são ataques característicos do tipo negação de serviço de baixa taxa (low-rate denial of service - LDoS), baseado no trabalho desenvolvido no artigo: "Low-Rate DoS Attacks, Detection, Defense, and Challenges: A Survey". Os ataques de EDoS encontrados no dataset são: HTTP (também conhecido como LoRDAS), slowloris, database api request, XML External Entities (XXE),  Cross-Site Scripting (Internet Explorer)
+
+3) pré-processamento de dados: 
+
+	2.1) limpeza - remoção de caracteres especiais ou valores nulos, deixando 45 colunas e 256890 linhas (fluxos)
+
+	2.2) one-hot encoding (transformá-las em variáveis(colunas) e binárias), onde as colunas proto, service, state, attack_cat serão transformadas em valores binários. Após esse procedimento, foram gerados 202 colunas e permanecendo as 256890 linhas (fluxos).
+	
+	2.3) Uso da técnica de normalização de dados min-max. O uso dessa técnica é necessário para deixar os seus dados na distribuição normal (Z).
+
+	2.4) Definição para Previsor e classe, onde classe são as colunas entre 1 - 202 (exceto a coluna 40) e o previsor sendo a coluna 40 (label)
+
+	2.5) Como os dados permanecem desbalanceados, utilizamos a técnica Oversampling e Undersampling (híbrido) conhecida como SMOTEEN (Synthetic Minority Over-sampling TEchnique com KNN) para dados desbalanceados. 
+	
+	
+	2.6) Separação entre 70% para treinamento, 30% para teste e 30% para validação.
+	
+	obs.: verificar quantidade de ataques EDoS nos 70% de treinamento e nos 30% de teste.
+	
+3) Descoberta de hiperparâmetros
+
+	3.1) Definição dos parâmetros:
+	
+	a) Quando usamos o classificador Random Forest:
+	
+    'bootstrap': [True, False],
+    'criterion': ["gini", "entropy"],
+    'max_depth': [80, 90, 100, 110],
+    'min_samples_leaf': [3, 4, 5],
+    'min_samples_split': [8, 10, 12],
+    'n_estimators': [100, 200, 300, 1000],
+    'max_features': ["sqrt", "log2"]
+    
+    	b) Quando usamos o classificador XGboost:
+    	
+    	gamma = [0, 0.5, 1]
+	reg_lambda = [0, 0.5, 1]
+	reg_alpha = [0, 0.5, 1]
+	tree_method = ['auto', 'exact', 'approx', 'hist']
+	n_estimators = [100, 200, 500]
+	max_depth = [5, 7, 10]
+	learning_rate = [0.01, 0.05, 0.1]
+	min_child_weight = [1, 3, 5]
+	subsample = [0.5, 0.7, 1.0]
+	colsample_bytree = [0.5, 0.7, 1.0]
+    	
+    	3.2) Definição da técnica para busca dos melhores parâmetros:
+    	
+    	3.2.1) Técnica de Nature Inspired Search
+    	
+    	- Definição dos algoritmos de metaheurística baseados na natureza: Algoritmo do Morcego (BAT), Algoritmo Híbrido do Morcego (HBA), Algoritmo de Morcego Híbrido Auto-adaptável (HSABA), Algoritmo do Vagalume (FA), Algoritmo Otimizador de Lobo Cinzento (GWO), Algoritmos Genéticos (GA).
+    	
+    	- Os dados são enviados para técnica de Nature inspired search, selecionando os melhores parâmetros otimizados que devem ser utilizados em cada algoritmo classificador. Essa seleção é realizada através dos algoritmos metaherísticos. 
+    	
+    	3.2.2) Técnica de Random Search e Bayesian Search
+    	
+    	
+    	3.3) Após a definição dos melhores hiperparâmetros, os mesmos serão enviados para o algoritmo classificador.
+    	
+3.3) Algoritmos de ML para classificação de ataques EDoS
+
+	a) Algoritmo Random Forest - Algoritmo Ensemble que trabalha com árvores de decisão. Esse algoritmo utiliza técnicas de bagging. Recebido os melhores hiperparâmetros da etapa anterior, é realizado classificação entre ataques específicos de EDoS e não ataques
+	
+	b) ALgoritmo XGBoost - Algoritmo Ensemble que trabalha na categoria de algoritmos baseados em Decision Trees (árvores de decisão) com Gradient Boosting (aumento de gradiente). O aumento de gradiente significa que o algoritmo utiliza o algoritmo Gradient Descent para minimizar a perda (loss) enquanto novos modelos vão sendo adicionados. Recebido os melhores hiperparâmetros da etapa anterior, é realizado classificação entre ataques específicos de EDoS e não ataques.
+	
+	Obs.: O bagging reduz a variação calculando a média das previsões de vários modelos. Boosting se concentra na correção de erros sequencialmente para construir um modelo mais forte.
+
+#####################################3
+
+Reunião 28/05/2024
+	
+	--> Explicar o SMOTEEN e justificar
+	--> Depois de todos os testes, executar um teste (5X) com HBAT + XGBoost ou outra técnica metaheurística sem SMOTEEN, ADASYN, SMOTE+TOMEK LINKS
+	--> Procurar artigos que explique a vantagem do uso SMOTEEN, se possível que tenha usado ataques EDoS.
+
+####################
+
+Ataques EDoS - 13676
+Ataques DoS - 2516
+Normal - 92998
+Analysis - 2618
+Backdoor - 2287
+Exploits - 44172
+Fuzzers - 24174
+Generic - 58822
+Reconnaissance - 13942
+Shellcode - 1511
+Worms - 174
+	
